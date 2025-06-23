@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -20,16 +22,27 @@ func main() {
 	redisUsername := getEnv("REDIS_USERNAME", "default")
 	redisPassword := getEnv("REDIS_PASSWORD", "")
 	webserverPort := getEnv("PORT", "8080")
+	useInsecureTLS := getEnv("REDIS_INSECURE_TLS", "false")
+	useTLS, err := strconv.ParseBool(useInsecureTLS)
+	if err != nil {
+		log.Fatalf("can not parse env variable %q: %v", "REDIS_INSECURE_TLS", err)
+	}
+
+	var tlsConfig *tls.Config
+	if useTLS {
+		tlsConfig = &tls.Config{InsecureSkipVerify: true}
+	}
 	// Initialize Redis client
 	rdb = redis.NewClient(&redis.Options{
-		Addr:     redisServer,
-		Username: redisUsername,
-		Password: redisPassword, // no password by default
-		DB:       0,             // use default DB
+		Addr:      redisServer,
+		Username:  redisUsername,
+		Password:  redisPassword, // no password by default
+		DB:        0,             // use default DB
+		TLSConfig: tlsConfig,
 	})
 
 	// Test Redis connection
-	_, err := rdb.Ping(ctx).Result()
+	_, err = rdb.Ping(ctx).Result()
 	if err != nil {
 		log.Fatalf("could not connect to redis: %v", err)
 	}
