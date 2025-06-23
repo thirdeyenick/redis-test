@@ -17,11 +17,13 @@ var (
 
 func main() {
 	redisServer := getEnv("REDIS_SERVER", "localhost:6379")
+	redisUsername := getEnv("REDIS_USERNAME", "default")
 	redisPassword := getEnv("REDIS_PASSWORD", "")
 	webserverPort := getEnv("PORT", "8080")
 	// Initialize Redis client
 	rdb = redis.NewClient(&redis.Options{
 		Addr:     redisServer,
+		Username: redisUsername,
 		Password: redisPassword, // no password by default
 		DB:       0,             // use default DB
 	})
@@ -50,7 +52,7 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 	log.Printf("page visits: %d", count)
 
 	// Simple HTML page
-	fmt.Fprintf(w, `
+	fmt.Fprint(w, `
 		<!DOCTYPE html>
 		<html>
 		<head><title>Test</title></head>
@@ -59,7 +61,7 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 			<p>nothing to see here</p>
 		</body>
 		</html>
-	`, count)
+	`)
 }
 
 // getEnv gets an environment variable or returns a default value
